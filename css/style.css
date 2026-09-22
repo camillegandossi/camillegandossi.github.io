@@ -775,6 +775,54 @@ a {
   font-size: 12px;
 }
 
+/* ---------- Video lightbox ---------- */
+.video-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.94);
+}
+
+.video-lightbox.open {
+  display: flex;
+}
+
+.video-lightbox video {
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+}
+
+.video-lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.video-lightbox-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.video-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
 /* ---------- Stats ---------- */
 .stats-grid {
   display: grid;

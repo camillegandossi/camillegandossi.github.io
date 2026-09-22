@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/style.css?v=2">
 <link rel="icon" href="../favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16.png">
@@ -45,13 +45,22 @@
   <section class="album-gallery-section">
     <div class="section-inner">
       <div class="gallery-grid">
-        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-01.mp4" muted loop playsinline preload="metadata"></video></div>
-        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-02.mp4" muted loop playsinline preload="metadata"></video></div>
-        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-03.mp4" muted loop playsinline preload="metadata"></video></div>
-        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-04.mp4" muted loop playsinline preload="metadata"></video></div>
+        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-01.mp4" poster="../images/portfolio/commercial/video-01-poster.jpg" muted loop playsinline preload="metadata"></video></div>
+        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-02.mp4" poster="../images/portfolio/commercial/video-02-poster.jpg" muted loop playsinline preload="metadata"></video></div>
+        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-03.mp4" poster="../images/portfolio/commercial/video-03-poster.jpg" muted loop playsinline preload="metadata"></video></div>
+        <div class="gallery-item"><video class="hover-video" src="../images/portfolio/commercial/video-04.mp4" poster="../images/portfolio/commercial/video-04-poster.jpg" muted loop playsinline preload="metadata"></video></div>
       </div>
     </div>
   </section>
+
+  <!-- VIDEO LIGHTBOX: tap/click a gallery video to expand it full-screen
+       with native controls; closes via the X, backdrop click, or Escape. -->
+  <div class="video-lightbox" id="videoLightbox">
+    <button class="video-lightbox-close" id="videoLightboxClose" aria-label="Close video">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <video id="videoLightboxPlayer" controls playsinline></video>
+  </div>
 </main>
 
 <!-- CONTACT / FOOTER -->
@@ -72,6 +81,6 @@
   </div>
 </footer>
 
-<script src="../js/script.js?v=2"></script>
+<script src="../js/script.js?v=3"></script>
 </body>
 </html>

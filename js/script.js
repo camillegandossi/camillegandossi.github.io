@@ -33,8 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Commercial-style gallery videos: play on hover, otherwise sit static on
-  // their first frame. Touch devices never fire mouseenter, so they simply
-  // see the static frame — no extra handling needed there.
+  // their poster frame (mobile browsers don't reliably paint a video's own
+  // first frame without one). Touch devices never fire mouseenter, so they
+  // simply see the poster — no extra handling needed there.
   document.querySelectorAll('.hover-video').forEach(video => {
     video.addEventListener('mouseenter', () => video.play());
     video.addEventListener('mouseleave', () => {
@@ -42,6 +43,47 @@ document.addEventListener('DOMContentLoaded', () => {
       video.currentTime = 0;
     });
   });
+
+  // Video lightbox: click/tap a gallery video (desktop or mobile) to expand
+  // it full-screen with native controls (play/pause, scrub, volume). Each
+  // thumbnail's own hover-preview video keeps playing muted underneath —
+  // the lightbox uses a separate <video> so the two never fight over src.
+  const videoLightbox = document.getElementById('videoLightbox');
+  if (videoLightbox) {
+    const lightboxPlayer = document.getElementById('videoLightboxPlayer');
+    const lightboxCloseBtn = document.getElementById('videoLightboxClose');
+
+    const openVideoLightbox = (src) => {
+      lightboxPlayer.src = src;
+      videoLightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      lightboxPlayer.play();
+    };
+
+    const closeVideoLightbox = () => {
+      lightboxPlayer.pause();
+      lightboxPlayer.removeAttribute('src');
+      lightboxPlayer.load();
+      videoLightbox.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    document.querySelectorAll('.hover-video').forEach(video => {
+      video.addEventListener('click', () => {
+        video.pause();
+        video.currentTime = 0;
+        openVideoLightbox(video.currentSrc || video.src);
+      });
+    });
+
+    lightboxCloseBtn.addEventListener('click', closeVideoLightbox);
+    videoLightbox.addEventListener('click', (e) => {
+      if (e.target === videoLightbox) closeVideoLightbox();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (videoLightbox.classList.contains('open') && e.key === 'Escape') closeVideoLightbox();
+    });
+  }
 
   // Hero slideshow: crossfade through hero-1..hero-5 in order, looping.
   const heroSlides = document.querySelectorAll('#heroSlideshow .hero-slide');
