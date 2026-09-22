@@ -47,7 +47,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // About section's autoplaying background video, directly under the hero.
-  document.querySelectorAll('.seamless-loop-video').forEach(enableSeamlessLoop);
+  // The `autoplay` HTML attribute alone isn't reliable on every mobile
+  // browser (in-app webviews like Instagram/TikTok, Android data-saver
+  // mode, etc. can silently block it) — when that happens the browser
+  // falls back to showing its native play button over the video instead of
+  // just quietly not playing. Explicitly calling .play() covers most of
+  // those cases, and retrying once on the very first tap/scroll anywhere
+  // on the page catches the rest, since a user gesture always clears an
+  // autoplay block.
+  document.querySelectorAll('.seamless-loop-video').forEach(video => {
+    enableSeamlessLoop(video);
+    video.muted = true;
+    const tryPlay = () => video.play().catch(() => {});
+    tryPlay();
+    video.addEventListener('loadedmetadata', tryPlay, { once: true });
+    ['touchstart', 'click', 'scroll'].forEach(evt =>
+      document.addEventListener(evt, tryPlay, { once: true, passive: true })
+    );
+  });
 
   // Commercial-style gallery videos: play on hover, otherwise sit static on
   // their poster frame (mobile browsers don't reliably paint a video's own
