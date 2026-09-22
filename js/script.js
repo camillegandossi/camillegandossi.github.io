@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === navLinks) closeMobileNav();
   });
 
+  // Manual loop instead of the native `loop` attribute: seeking back to true
+  // 0 only once playback already hit the end forces the decoder to stall on
+  // a fresh keyframe scan, which shows as a black flash/stutter on some
+  // (mostly mobile) browsers. Restarting a hair before the true end skips
+  // that stall — the last fraction of a second of video is never missed by
+  // eye, and the loop reads as continuous instead of cutting to black.
+  function enableSeamlessLoop(video) {
+    video.addEventListener('timeupdate', () => {
+      if (video.duration && video.currentTime >= video.duration - 0.15) {
+        video.currentTime = 0;
+      }
+    });
+  }
+
+  // About section's autoplaying background video, directly under the hero.
+  document.querySelectorAll('.seamless-loop-video').forEach(enableSeamlessLoop);
+
   // Commercial-style gallery videos: play on hover, otherwise sit static on
   // their poster frame (mobile browsers don't reliably paint a video's own
   // first frame without one). Touch devices never fire mouseenter, so they
@@ -42,17 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       video.pause();
       video.currentTime = 0;
     });
-    // Manual loop instead of the native `loop` attribute: seeking back to
-    // true 0 only once playback already hit the end forces the decoder to
-    // stall on a fresh keyframe scan, which shows as a black flash on some
-    // (mostly mobile) browsers. Restarting a hair before the true end skips
-    // that stall — the last fraction of a second of video is never missed
-    // by eye, and the loop reads as continuous instead of cutting to black.
-    video.addEventListener('timeupdate', () => {
-      if (video.duration && video.currentTime >= video.duration - 0.15) {
-        video.currentTime = 0;
-      }
-    });
+    enableSeamlessLoop(video);
   });
 
   // Video lightbox: click/tap a gallery video (desktop or mobile) to expand
@@ -107,9 +114,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3000);
   }
 
-  // Worked-with logo marquee: build two back-to-back copies of the logo
-  // list so the track can loop seamlessly (see @keyframes marquee-scroll,
-  // which animates to translateX(-50%) — exactly one copy's width).
+  // Continuously auto-scrolls `track` leftward and wraps seamlessly, for a
+  // track built as two back-to-back identical copies of its content
+  // (translating by exactly one copy's width lands back on frame 1,
+  // pixel-for-pixel). Driven by requestAnimationFrame with the offset
+  // wrapped via modulo every frame, instead of a CSS @keyframes loop that
+  // has to hard-reset transform from 100% back to 0% — that reset is
+  // exactly where wide composited layers tend to hitch or drop a frame,
+  // especially on mobile. Modulo-wrapped JS state has no reset to hitch on:
+  // every frame is just "a bit further than last frame," forever. Also
+  // re-measures the track's width every frame, so it stays correct even
+  // while images are still streaming in and the width: max-content box is
+  // still growing.
+  function setupSeamlessMarquee(track, hoverParent, desktopDuration, mobileDuration) {
+    if (!track) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let offset = 0;
+    let lastTime = null;
+    let paused = false;
+
+    if (hoverParent) {
+      hoverParent.addEventListener('mouseenter', () => { paused = true; });
+      hoverParent.addEventListener('mouseleave', () => { paused = false; });
+    }
+
+    function frame(now) {
+      if (lastTime === null) lastTime = now;
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      const halfWidth = track.scrollWidth / 2;
+      if (!paused && halfWidth > 0) {
+        const duration = window.matchMedia('(max-width: 640px)').matches ? mobileDuration : desktopDuration;
+        offset = (offset + (halfWidth / duration) * dt) % halfWidth;
+        track.style.transform = `translateX(${-offset}px)`;
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // Worked-with logo marquee: two back-to-back copies of the logo list —
+  // see setupSeamlessMarquee, above.
   const marqueeTrack = document.getElementById('marqueeTrack');
   if (marqueeTrack) {
     const brandLogos = [
@@ -123,32 +170,23 @@ document.addEventListener('DOMContentLoaded', () => {
       { src: 'images/brand-logos/sirivannavari.png', alt: 'Sirivannavari' },
       { src: 'images/brand-logos/vogue.png', alt: 'Vogue' },
     ];
-    const logoLoads = [...brandLogos, ...brandLogos].map(({ src, alt }) => {
+    [...brandLogos, ...brandLogos].forEach(({ src, alt }) => {
       const img = document.createElement('img');
       img.src = src;
       img.alt = alt;
       img.loading = 'lazy';
       marqueeTrack.appendChild(img);
-      return new Promise(resolve => {
-        if (img.complete) resolve();
-        else { img.addEventListener('load', resolve); img.addEventListener('error', resolve); }
-      });
     });
-    // Don't start the scroll until every logo (including the duplicated
-    // set) has its real intrinsic size — starting immediately would animate
-    // translateX(-50%) against a width: max-content box that's still
-    // growing as images stream in, warping the loop into a visible jump.
-    Promise.all(logoLoads).then(() => marqueeTrack.classList.add('is-ready'));
+    setupSeamlessMarquee(marqueeTrack, document.getElementById('worked-with'), 32, 22);
   }
 
   // Highlights auto-scroll marquee: same seamless-loop technique as the
-  // Worked With strip (duplicate the set once, animate to translateX(-50%)),
-  // plus a click-to-expand lightbox with prev/next navigation.
+  // Worked With strip, plus a click-to-expand lightbox with prev/next nav.
   const highlightsTrack = document.getElementById('highlightsTrack');
   const highlightImages = ['SRV1', 'SRVNYC2', 'SRV4', 'SRV3', 'SRV2', 'SRV5', 'SRV6'];
 
   if (highlightsTrack) {
-    const highlightLoads = [...highlightImages, ...highlightImages].map((name, i) => {
+    [...highlightImages, ...highlightImages].forEach((name, i) => {
       const img = document.createElement('img');
       img.src = `images/highlights/${name}.jpg`;
       img.alt = `Camille Gandossi — highlight ${(i % highlightImages.length) + 1}`;
@@ -156,13 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
       img.dataset.index = i % highlightImages.length;
       img.addEventListener('click', () => openLightbox(Number(img.dataset.index)));
       highlightsTrack.appendChild(img);
-      return new Promise(resolve => {
-        if (img.complete) resolve();
-        else { img.addEventListener('load', resolve); img.addEventListener('error', resolve); }
-      });
     });
-    // Same load-gated start as the Worked With marquee, above.
-    Promise.all(highlightLoads).then(() => highlightsTrack.classList.add('is-ready'));
+    setupSeamlessMarquee(highlightsTrack, document.getElementById('highlights'), 46, 30);
   }
 
   const lightbox = document.getElementById('highlightsLightbox');

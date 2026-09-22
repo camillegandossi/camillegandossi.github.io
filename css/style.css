@@ -366,15 +366,13 @@ a {
   width: max-content;
   gap: 80px;
   will-change: transform;
-}
-
-/* Animation only starts once JS confirms every logo (including the
-   duplicated set) has finished loading — see script.js. Starting it
-   immediately on page load would animate translateX(-50%) against a
-   track whose width: max-content box is still growing as images
-   stream in, warping the loop and causing a visible jump. */
-.marquee-track.is-ready {
-  animation: marquee-scroll 32s linear infinite;
+  /* Scrolled by script.js via requestAnimationFrame, not a CSS animation —
+     see setupSeamlessMarquee(). A CSS @keyframes loop has to hard-reset
+     transform back to 0% once it hits 100%, and that reset is exactly where
+     browsers (mobile especially) tend to drop a frame or hitch on very wide
+     composited layers. Driving the transform every frame from continuously
+     accumulated, modulo-wrapped JS state has no such reset point to hitch
+     on — each frame is just "a bit further than last frame," forever. */
 }
 
 .marquee-track img {
@@ -384,32 +382,9 @@ a {
   filter: grayscale(100%);
 }
 
-@keyframes marquee-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-/* Pause on hover — only for devices with a real pointer, so a mobile tap
-   doesn't leave the marquee stuck mid-scroll via a sticky :hover state. */
-@media (hover: hover) and (pointer: fine) {
-  .logo-strip:hover .marquee-track {
-    animation-play-state: paused;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track.is-ready {
-    animation: none;
-  }
-}
-
 @media (max-width: 640px) {
   .marquee-track {
     gap: 48px;
-  }
-
-  .marquee-track.is-ready {
-    animation-duration: 22s;
   }
 
   .marquee-track img {
@@ -444,11 +419,7 @@ a {
   gap: 6px;
   padding: 0 32px;
   will-change: transform;
-}
-
-/* Same load-gated animation as .marquee-track — see script.js. */
-.highlights-track.is-ready {
-  animation: marquee-scroll 46s linear infinite;
+  /* Scrolled by script.js — same rAF technique as .marquee-track, above. */
 }
 
 .highlights-track img {
@@ -467,14 +438,6 @@ a {
   opacity: 0.85;
 }
 
-/* Pause on hover — real pointer devices only, same reasoning as the
-   Worked With marquee (avoids a mobile tap leaving it stuck paused). */
-@media (hover: hover) and (pointer: fine) {
-  .highlights:hover .highlights-track {
-    animation-play-state: paused;
-  }
-}
-
 @media (max-width: 860px) {
   .highlights-track img {
     height: 320px;
@@ -485,10 +448,6 @@ a {
   .highlights-track {
     gap: 4px;
     padding: 0 20px;
-  }
-
-  .highlights-track.is-ready {
-    animation-duration: 30s;
   }
 
   .highlights-track img {
