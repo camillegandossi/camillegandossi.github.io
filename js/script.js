@@ -139,13 +139,38 @@ document.addEventListener('DOMContentLoaded', () => {
   // has to hard-reset transform from 100% back to 0% — that reset is
   // exactly where wide composited layers tend to hitch or drop a frame,
   // especially on mobile. Modulo-wrapped JS state has no reset to hitch on:
-  // every frame is just "a bit further than last frame," forever. Also
-  // re-measures the track's width every frame, so it stays correct even
-  // while images are still streaming in and the width: max-content box is
-  // still growing.
+  // every frame is just "a bit further than last frame," forever.
+  //
+  // Two things that specifically matter on mobile, where CPUs are weaker
+  // and frame drops are more common:
+  //   1. track.scrollWidth forces a synchronous layout read. Reading it on
+  //      every single frame (the original version of this function did)
+  //      is layout thrashing — on a slow device that read alone can blow
+  //      the 16ms frame budget, dropping frames. Measure it via
+  //      ResizeObserver instead (event-driven, only on real size changes)
+  //      and cache the result, so steady-state frames do zero layout work.
+  //   2. Any frame that IS dropped/delayed (a GC pause, a scroll/render
+  //      hitch, the tab briefly backgrounded) hands the next frame a much
+  //      bigger dt. Without a cap, offset jumps forward by that whole gap
+  //      in one step, which reads as a visible cut. Clamping dt makes a
+  //      dropped frame look like a brief slowdown instead of a jump.
   function setupSeamlessMarquee(track, hoverParent, desktopDuration, mobileDuration) {
     if (!track) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let halfWidth = track.scrollWidth / 2;
+    const remeasure = () => { halfWidth = track.scrollWidth / 2; };
+    if (window.ResizeObserver) {
+      new ResizeObserver(remeasure).observe(track);
+    } else {
+      window.addEventListener('resize', remeasure);
+    }
+
+    const mobileQuery = window.matchMedia('(max-width: 640px)');
+    let isMobile = mobileQuery.matches;
+    const updateIsMobile = (e) => { isMobile = e.matches; };
+    if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', updateIsMobile);
+    else mobileQuery.addListener(updateIsMobile); // Safari < 14 fallback
 
     let offset = 0;
     let lastTime = null;
@@ -158,12 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function frame(now) {
       if (lastTime === null) lastTime = now;
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      const halfWidth = track.scrollWidth / 2;
       if (!paused && halfWidth > 0) {
-        const duration = window.matchMedia('(max-width: 640px)').matches ? mobileDuration : desktopDuration;
+        const duration = isMobile ? mobileDuration : desktopDuration;
         offset = (offset + (halfWidth / duration) * dt) % halfWidth;
         track.style.transform = `translateX(${-offset}px)`;
       }
