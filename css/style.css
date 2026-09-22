@@ -365,8 +365,16 @@ a {
   align-items: center;
   width: max-content;
   gap: 80px;
-  animation: marquee-scroll 32s linear infinite;
   will-change: transform;
+}
+
+/* Animation only starts once JS confirms every logo (including the
+   duplicated set) has finished loading — see script.js. Starting it
+   immediately on page load would animate translateX(-50%) against a
+   track whose width: max-content box is still growing as images
+   stream in, warping the loop and causing a visible jump. */
+.marquee-track.is-ready {
+  animation: marquee-scroll 32s linear infinite;
 }
 
 .marquee-track img {
@@ -390,7 +398,7 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
+  .marquee-track.is-ready {
     animation: none;
   }
 }
@@ -398,6 +406,9 @@ a {
 @media (max-width: 640px) {
   .marquee-track {
     gap: 48px;
+  }
+
+  .marquee-track.is-ready {
     animation-duration: 22s;
   }
 
@@ -432,8 +443,12 @@ a {
   width: max-content;
   gap: 6px;
   padding: 0 32px;
-  animation: marquee-scroll 46s linear infinite;
   will-change: transform;
+}
+
+/* Same load-gated animation as .marquee-track — see script.js. */
+.highlights-track.is-ready {
+  animation: marquee-scroll 46s linear infinite;
 }
 
 .highlights-track img {
@@ -470,6 +485,9 @@ a {
   .highlights-track {
     gap: 4px;
     padding: 0 20px;
+  }
+
+  .highlights-track.is-ready {
     animation-duration: 30s;
   }
 

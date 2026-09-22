@@ -42,6 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
       video.pause();
       video.currentTime = 0;
     });
+    // Manual loop instead of the native `loop` attribute: seeking back to
+    // true 0 only once playback already hit the end forces the decoder to
+    // stall on a fresh keyframe scan, which shows as a black flash on some
+    // (mostly mobile) browsers. Restarting a hair before the true end skips
+    // that stall — the last fraction of a second of video is never missed
+    // by eye, and the loop reads as continuous instead of cutting to black.
+    video.addEventListener('timeupdate', () => {
+      if (video.duration && video.currentTime >= video.duration - 0.15) {
+        video.currentTime = 0;
+      }
+    });
   });
 
   // Video lightbox: click/tap a gallery video (desktop or mobile) to expand
@@ -112,13 +123,22 @@ document.addEventListener('DOMContentLoaded', () => {
       { src: 'images/brand-logos/sirivannavari.png', alt: 'Sirivannavari' },
       { src: 'images/brand-logos/vogue.png', alt: 'Vogue' },
     ];
-    [...brandLogos, ...brandLogos].forEach(({ src, alt }) => {
+    const logoLoads = [...brandLogos, ...brandLogos].map(({ src, alt }) => {
       const img = document.createElement('img');
       img.src = src;
       img.alt = alt;
       img.loading = 'lazy';
       marqueeTrack.appendChild(img);
+      return new Promise(resolve => {
+        if (img.complete) resolve();
+        else { img.addEventListener('load', resolve); img.addEventListener('error', resolve); }
+      });
     });
+    // Don't start the scroll until every logo (including the duplicated
+    // set) has its real intrinsic size — starting immediately would animate
+    // translateX(-50%) against a width: max-content box that's still
+    // growing as images stream in, warping the loop into a visible jump.
+    Promise.all(logoLoads).then(() => marqueeTrack.classList.add('is-ready'));
   }
 
   // Highlights auto-scroll marquee: same seamless-loop technique as the
@@ -128,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const highlightImages = ['SRV1', 'SRVNYC2', 'SRV4', 'SRV3', 'SRV2', 'SRV5', 'SRV6'];
 
   if (highlightsTrack) {
-    [...highlightImages, ...highlightImages].forEach((name, i) => {
+    const highlightLoads = [...highlightImages, ...highlightImages].map((name, i) => {
       const img = document.createElement('img');
       img.src = `images/highlights/${name}.jpg`;
       img.alt = `Camille Gandossi — highlight ${(i % highlightImages.length) + 1}`;
@@ -136,7 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
       img.dataset.index = i % highlightImages.length;
       img.addEventListener('click', () => openLightbox(Number(img.dataset.index)));
       highlightsTrack.appendChild(img);
+      return new Promise(resolve => {
+        if (img.complete) resolve();
+        else { img.addEventListener('load', resolve); img.addEventListener('error', resolve); }
+      });
     });
+    // Same load-gated start as the Worked With marquee, above.
+    Promise.all(highlightLoads).then(() => highlightsTrack.classList.add('is-ready'));
   }
 
   const lightbox = document.getElementById('highlightsLightbox');
