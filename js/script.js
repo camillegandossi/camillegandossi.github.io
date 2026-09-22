@@ -1,0 +1,258 @@
+document.addEventListener('DOMContentLoaded', () => {
+  // Footer year
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // Navbar background on scroll
+  const navbar = document.getElementById('navbar');
+  const onScroll = () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll);
+
+  // Mobile nav toggle
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  const closeMobileNav = () => {
+    navLinks.classList.remove('open');
+    navToggle.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  };
+  navToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.classList.toggle('open', isOpen);
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', closeMobileNav);
+  });
+  // Tapping the open panel's own background (not a link) also closes it.
+  navLinks.addEventListener('click', (e) => {
+    if (e.target === navLinks) closeMobileNav();
+  });
+
+  // Commercial-style gallery videos: play on hover, otherwise sit static on
+  // their first frame. Touch devices never fire mouseenter, so they simply
+  // see the static frame — no extra handling needed there.
+  document.querySelectorAll('.hover-video').forEach(video => {
+    video.addEventListener('mouseenter', () => video.play());
+    video.addEventListener('mouseleave', () => {
+      video.pause();
+      video.currentTime = 0;
+    });
+  });
+
+  // Hero slideshow: crossfade through hero-1..hero-5 in order, looping.
+  const heroSlides = document.querySelectorAll('#heroSlideshow .hero-slide');
+  if (heroSlides.length) {
+    let activeIndex = 0;
+    setInterval(() => {
+      heroSlides[activeIndex].classList.remove('active');
+      activeIndex = (activeIndex + 1) % heroSlides.length;
+      heroSlides[activeIndex].classList.add('active');
+    }, 3000);
+  }
+
+  // Worked-with logo marquee: build two back-to-back copies of the logo
+  // list so the track can loop seamlessly (see @keyframes marquee-scroll,
+  // which animates to translateX(-50%) — exactly one copy's width).
+  const marqueeTrack = document.getElementById('marqueeTrack');
+  if (marqueeTrack) {
+    const brandLogos = [
+      { src: 'images/brand-logos/fred.png', alt: 'Fred' },
+      { src: 'images/brand-logos/giorgio-armani.png', alt: 'Giorgio Armani' },
+      { src: 'images/brand-logos/gucci.png', alt: 'Gucci' },
+      { src: 'images/brand-logos/chanel.png', alt: 'Chanel' },
+      { src: 'images/brand-logos/jim-thompson.png', alt: 'Jim Thompson' },
+      { src: 'images/brand-logos/louis-vuitton.png', alt: 'Louis Vuitton' },
+      { src: 'images/brand-logos/montblanc.png', alt: 'Montblanc' },
+      { src: 'images/brand-logos/sirivannavari.png', alt: 'Sirivannavari' },
+      { src: 'images/brand-logos/vogue.png', alt: 'Vogue' },
+    ];
+    [...brandLogos, ...brandLogos].forEach(({ src, alt }) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = alt;
+      img.loading = 'lazy';
+      marqueeTrack.appendChild(img);
+    });
+  }
+
+  // Highlights auto-scroll marquee: same seamless-loop technique as the
+  // Worked With strip (duplicate the set once, animate to translateX(-50%)),
+  // plus a click-to-expand lightbox with prev/next navigation.
+  const highlightsTrack = document.getElementById('highlightsTrack');
+  const highlightImages = ['SRV1', 'SRVNYC2', 'SRV4', 'SRV3', 'SRV2', 'SRV5', 'SRV6'];
+
+  if (highlightsTrack) {
+    [...highlightImages, ...highlightImages].forEach((name, i) => {
+      const img = document.createElement('img');
+      img.src = `images/highlights/${name}.jpg`;
+      img.alt = `Camille Gandossi — highlight ${(i % highlightImages.length) + 1}`;
+      img.loading = 'lazy';
+      img.dataset.index = i % highlightImages.length;
+      img.addEventListener('click', () => openLightbox(Number(img.dataset.index)));
+      highlightsTrack.appendChild(img);
+    });
+  }
+
+  const lightbox = document.getElementById('highlightsLightbox');
+  const lightboxImage = document.getElementById('lightboxImage');
+  const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxPrev = document.getElementById('lightboxPrev');
+  const lightboxNext = document.getElementById('lightboxNext');
+  let lightboxIndex = 0;
+
+  function renderLightboxImage() {
+    const name = highlightImages[lightboxIndex];
+    lightboxImage.src = `images/highlights/${name}.jpg`;
+    lightboxImage.alt = `Camille Gandossi — highlight ${lightboxIndex + 1}`;
+  }
+
+  function openLightbox(index) {
+    lightboxIndex = index;
+    renderLightboxImage();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function showPrev() {
+    lightboxIndex = (lightboxIndex - 1 + highlightImages.length) % highlightImages.length;
+    renderLightboxImage();
+  }
+
+  function showNext() {
+    lightboxIndex = (lightboxIndex + 1) % highlightImages.length;
+    renderLightboxImage();
+  }
+
+  if (lightbox) {
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxPrev.addEventListener('click', showPrev);
+    lightboxNext.addEventListener('click', showNext);
+
+    // Click the dark backdrop (not the image or the buttons) to close.
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') showPrev();
+      if (e.key === 'ArrowRight') showNext();
+    });
+  }
+
+  // Luxury Brand Exclusive Events: 3 frames, each independently cycling
+  // through a different brand's photos every 2s, staggered by 0.5s per
+  // frame so they don't change in sync. At every moment the 3 frames must
+  // show 3 different brands, so each tick picks a random brand that isn't
+  // currently shown in either of the other two frames.
+  const brandFrames = document.querySelectorAll('#brandFrames .brand-frame');
+  if (brandFrames.length === 3) {
+    // Montblanc has only 1 photo, so as its own rotation slot it would
+    // reshow that same image as often as brands with 5-6 photos. Grouping
+    // it with Sirivannavari (2 photos, the next-smallest set) gives that
+    // slot 3 photos to draw from — each photo keeps its own brand name for
+    // alt text via the {file, name} pairing below.
+    const brandNames = {
+      cc: 'Chanel',
+      ga: 'Giorgio Armani',
+      gg: 'Gucci',
+      lv: 'Louis Vuitton',
+      sv: 'Sirivannavari',
+      vg: 'Vogue',
+    };
+    const brandPhotos = {
+      cc: ['cc1.jpg', 'cc2.jpg', 'cc3.jpg', 'cc4.jpg', 'cc5.jpg'].map(file => ({ file, name: brandNames.cc })),
+      ga: ['ga1.jpg', 'ga2.jpg', 'ga3.jpg'].map(file => ({ file, name: brandNames.ga })),
+      gg: ['gg1.jpg', 'gg2.jpg', 'gg3.jpg'].map(file => ({ file, name: brandNames.gg })),
+      lv: ['lv1.jpg', 'lv2.jpg', 'lv3.jpg', 'lv4.jpg'].map(file => ({ file, name: brandNames.lv })),
+      sv: [
+        ...['sv1.jpg', 'sv2.jpg'].map(file => ({ file, name: brandNames.sv })),
+        { file: 'mb1.jpg', name: 'Montblanc' },
+      ],
+      vg: ['vg1.jpg', 'vg2.jpg', 'vg3.jpg', 'vg4.jpg', 'vg5.jpg', 'vg6.jpg'].map(file => ({ file, name: brandNames.vg })),
+    };
+    const brandKeys = Object.keys(brandPhotos);
+    const brandCursor = Object.fromEntries(brandKeys.map(k => [k, 0]));
+
+    // Preload every photo up front. These are large (some 1-5MB) source
+    // files, and a photo taking longer than the 2s tick to arrive over the
+    // network was the actual cause of brand collisions in testing: a
+    // frame's "current brand" would advance again before its previous pick
+    // had even finished loading, orphaning that reservation and letting
+    // another frame legitimately reuse a brand that was still stuck
+    // on-screen. Preloading means every src is already in the browser's
+    // HTTP cache by the time it's needed.
+    Object.values(brandPhotos).flat().forEach(({ file }) => {
+      const preload = new Image();
+      preload.src = `images/highbrands/${file}`;
+    });
+
+    // Shuffle and hand out 3 distinct starting brands, one per frame.
+    const shuffled = [...brandKeys].sort(() => Math.random() - 0.5);
+    const currentBrand = [shuffled[0], shuffled[1], shuffled[2]];
+    const pending = [false, false, false];
+
+    function nextPhoto(brand) {
+      const photos = brandPhotos[brand];
+      const photo = photos[brandCursor[brand] % photos.length];
+      brandCursor[brand] += 1;
+      return photo;
+    }
+
+    function makeFrameController(frameEl, frameIndex) {
+      const layers = [...frameEl.querySelectorAll('.brand-frame-img')];
+      let active = 0;
+
+      return function showBrand(brand) {
+        pending[frameIndex] = true;
+        const next = 1 - active;
+        const nextImg = layers[next];
+        const photo = nextPhoto(brand);
+        nextImg.src = `images/highbrands/${photo.file}`;
+        nextImg.alt = `${photo.name} exclusive event`;
+        const activate = () => {
+          layers[active].classList.remove('active');
+          nextImg.classList.add('active');
+          active = next;
+          pending[frameIndex] = false;
+        };
+        if (nextImg.complete) activate();
+        else nextImg.onload = activate;
+      };
+    }
+
+    const controllers = [...brandFrames].map((el, i) => makeFrameController(el, i));
+
+    // Show each frame's first (already-picked) brand immediately.
+    currentBrand.forEach((brand, i) => controllers[i](brand));
+
+    currentBrand.forEach((_, frameIndex) => {
+      setTimeout(() => {
+        setInterval(() => {
+          // Skip this tick if the previous pick for this frame hasn't
+          // finished loading/activating — currentBrand[frameIndex] must
+          // always match (or be about to imminently match) what's visible,
+          // otherwise the uniqueness check below reads stale data.
+          if (pending[frameIndex]) return;
+          const forbidden = new Set(
+            currentBrand.filter((_, i) => i !== frameIndex)
+          );
+          const candidates = brandKeys.filter(k => !forbidden.has(k));
+          const newBrand = candidates[Math.floor(Math.random() * candidates.length)];
+          currentBrand[frameIndex] = newBrand;
+          controllers[frameIndex](newBrand);
+        }, 3000);
+      }, frameIndex * 500);
+    });
+  }
+});

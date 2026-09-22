@@ -1,0 +1,956 @@
+/* ---------- Reset & base ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-muted: #6b6b6b;
+  --color-line: #e6e6e6;
+  --color-accent: #1a1a1a;
+  --color-surface: #f4f3f1;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --max-width: 1180px;
+  --nav-height: 72px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.section-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 100px 32px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 48px;
+}
+
+.center {
+  text-align: center;
+}
+
+/* ---------- Placeholder media blocks ---------- */
+.placeholder-media {
+  background: linear-gradient(135deg, #dcdcdc 0%, #efefef 50%, #dcdcdc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.placeholder-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0,0,0,0.03) 25%, transparent 25%);
+  background-size: 24px 24px;
+}
+
+.placeholder-label {
+  position: relative;
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 16px;
+  max-width: 260px;
+  font-weight: 500;
+}
+
+/* ---------- Navbar ---------- */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.0);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.navbar.scrolled,
+.navbar--solid {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 var(--color-line);
+}
+
+.nav-logo {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #fff;
+  transition: color 0.3s ease;
+}
+
+.navbar.scrolled .nav-logo,
+.navbar--solid .nav-logo {
+  color: var(--color-text);
+}
+
+.nav-links {
+  display: flex;
+  gap: 36px;
+}
+
+.nav-links a {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #fff;
+  transition: color 0.3s ease, opacity 0.2s ease;
+}
+
+.navbar.scrolled .nav-links a,
+.navbar--solid .nav-links a {
+  color: var(--color-text);
+}
+
+.nav-links a:hover {
+  opacity: 0.6;
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.nav-toggle span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: #fff;
+  transition: background 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.navbar.scrolled .nav-toggle span,
+.navbar--solid .nav-toggle span,
+.nav-toggle.open span {
+  background: var(--color-text);
+}
+
+.nav-toggle.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 560px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.hero-slideshow {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Default anchor: upper third, not dead-center — most portrait shots
+     here have the face well above the vertical midpoint, and on wide/
+     short viewports object-fit: cover crops from the center outward,
+     so a centered anchor cuts heads off first. */
+  object-position: 50% 20%;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.hero-slide.active {
+  opacity: 1;
+}
+
+/* Per-photo overrides — tune the Y value (0% = top of image, 100% = bottom)
+   to move the visible crop window up/down for that specific photo.
+   X stays at 50% for all five; none of these need horizontal adjustment
+   at the breakpoints tested (375 / 768 / 1440 / 1920px). */
+.hero-slide-1 { object-position: 50% 15%; }
+.hero-slide-2 { object-position: 50% 18%; }
+.hero-slide-3 { object-position: 50% 16%; }
+.hero-slide-4 { object-position: 50% 13%; }
+.hero-slide-5 { object-position: 50% 20%; }
+.hero-slide-6 { object-position: 50% 30%; }
+.hero-slide-7 { object-position: 50% 38%; } /* landscape source photo — face already near center, needs only a slight lift */
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.65) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 32px 96px;
+  width: 100%;
+  color: #fff;
+}
+
+.hero-name {
+  font-size: clamp(38px, 7vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.hero-tagline {
+  margin-top: 14px;
+  font-size: clamp(15px, 2vw, 18px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+
+.hero-cta {
+  display: inline-block;
+  margin-top: 32px;
+  padding: 14px 30px;
+  border: 1px solid rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.hero-cta:hover {
+  background: #fff;
+  color: var(--color-text);
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  z-index: 2;
+  color: #fff;
+  font-size: 20px;
+  opacity: 0.8;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+/* ---------- About ---------- */
+.about-video {
+  width: 100%;
+  height: 70vh;
+  min-height: 420px;
+  max-height: 680px;
+  overflow: hidden;
+}
+
+.about-video video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.about-grid {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.about-text h2 {
+  font-size: clamp(26px, 3.5vw, 36px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+.cursive-name {
+  font-family: 'Pinyon Script', cursive;
+  font-weight: 400;
+  font-size: 2em;
+  letter-spacing: 0.01em;
+}
+
+.about-text p {
+  color: var(--color-muted);
+  margin: 0 auto 16px;
+  max-width: 46ch;
+}
+
+/* ---------- Worked With (logo marquee) ---------- */
+.logo-strip {
+  padding: 56px 0;
+  overflow: hidden;
+}
+
+.logo-strip .eyebrow {
+  padding: 0 32px;
+  margin-bottom: 28px;
+}
+
+.marquee {
+  width: 100%;
+  overflow: hidden;
+  /* fade the strip's edges so logos don't hard-cut at the viewport border */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 80px;
+  animation: marquee-scroll 32s linear infinite;
+  will-change: transform;
+}
+
+.marquee-track img {
+  height: 64px;
+  width: auto;
+  flex-shrink: 0;
+  filter: grayscale(100%);
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Pause on hover — only for devices with a real pointer, so a mobile tap
+   doesn't leave the marquee stuck mid-scroll via a sticky :hover state. */
+@media (hover: hover) and (pointer: fine) {
+  .logo-strip:hover .marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .marquee-track {
+    gap: 48px;
+    animation-duration: 22s;
+  }
+
+  .marquee-track img {
+    height: 44px;
+  }
+}
+
+/* ---------- Highlights (horizontal scroll panel) ---------- */
+.highlights-inner {
+  padding-bottom: 40px;
+}
+
+.highlights-description {
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.highlights-scroll {
+  width: 100%;
+  overflow: hidden;
+  padding-bottom: 48px;
+}
+
+.highlights-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 6px;
+  padding: 0 32px;
+  animation: marquee-scroll 46s linear infinite;
+  will-change: transform;
+}
+
+.highlights-track img {
+  height: 420px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 0;
+  object-fit: cover;
+  cursor: pointer;
+  -webkit-user-drag: none;
+  user-select: none;
+  transition: opacity 0.25s ease;
+}
+
+.highlights-track img:hover {
+  opacity: 0.85;
+}
+
+/* Pause on hover — real pointer devices only, same reasoning as the
+   Worked With marquee (avoids a mobile tap leaving it stuck paused). */
+@media (hover: hover) and (pointer: fine) {
+  .highlights:hover .highlights-track {
+    animation-play-state: paused;
+  }
+}
+
+@media (max-width: 860px) {
+  .highlights-track img {
+    height: 320px;
+  }
+}
+
+@media (max-width: 640px) {
+  .highlights-track {
+    gap: 4px;
+    padding: 0 20px;
+    animation-duration: 30s;
+  }
+
+  .highlights-track img {
+    height: 260px;
+  }
+}
+
+/* ---------- Highlights lightbox ---------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 10, 0.92);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.lightbox.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.lightbox-image {
+  max-width: 88vw;
+  max-height: 85vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close,
+.lightbox-nav {
+  position: absolute;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox-close:hover,
+.lightbox-nav:hover {
+  opacity: 0.7;
+}
+
+.lightbox-close {
+  top: 24px;
+  right: 24px;
+  font-size: 32px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+}
+
+.lightbox-nav {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 48px;
+  line-height: 1;
+  width: 56px;
+  height: 56px;
+}
+
+.lightbox-prev {
+  left: 12px;
+}
+
+.lightbox-next {
+  right: 12px;
+}
+
+@media (max-width: 640px) {
+  .lightbox-close {
+    top: 12px;
+    right: 12px;
+    font-size: 26px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .lightbox-nav {
+    font-size: 34px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .lightbox-prev {
+    left: 4px;
+  }
+
+  .lightbox-next {
+    right: 4px;
+  }
+}
+
+/* ---------- Luxury Brand Exclusive Events ---------- */
+.brand-events {
+  padding: 100px 32px 120px;
+}
+
+.brand-events .eyebrow {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.brand-frames {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.brand-frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.brand-frame-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.brand-frame-img.active {
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .brand-events {
+    padding: 72px 24px 88px;
+  }
+
+  .brand-frames {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-frames {
+    gap: 8px;
+  }
+}
+
+/* ---------- Portfolio gallery ---------- */
+.portfolio {
+  background: var(--color-surface);
+}
+
+.portfolio .eyebrow {
+  margin-bottom: 48px;
+}
+
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.album-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.album-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.album-tile:hover .album-cover {
+  transform: scale(1.05);
+}
+
+.album-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+.album-label {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .album-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+/* ---------- Album page (individual portfolio category) ---------- */
+.album-hero {
+  position: relative;
+  padding: 180px 32px 60px;
+  text-align: center;
+  background: var(--color-surface);
+}
+
+.album-back {
+  position: absolute;
+  top: 96px;
+  left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.album-back:hover {
+  opacity: 0.6;
+}
+
+.album-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 640px) {
+  .album-back {
+    top: 88px;
+    left: 20px;
+    font-size: 13px;
+  }
+}
+
+.album-hero h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.album-gallery-placeholder {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-style: italic;
+  padding: 80px 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.gallery-item {
+  aspect-ratio: 3 / 4;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gallery-item img,
+.gallery-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+}
+
+.gallery-item .placeholder-label {
+  font-size: 12px;
+}
+
+/* ---------- Stats ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+}
+
+.stat-item {
+  background: #fff;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.stat-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
+.stats-note {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* ---------- Contact / Footer ---------- */
+.contact {
+  background: var(--color-text);
+  color: #fff;
+}
+
+.contact-inner {
+  text-align: center;
+  padding-bottom: 64px;
+}
+
+.contact .eyebrow {
+  color: rgba(255,255,255,0.55);
+}
+
+.contact .section-title {
+  color: #fff;
+  margin-bottom: 40px;
+}
+
+.contact-links {
+  display: flex;
+  justify-content: center;
+  gap: 64px;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+
+.contact-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease, opacity 0.2s ease;
+}
+
+.contact-link:hover {
+  border-color: rgba(255,255,255,0.6);
+  opacity: 0.85;
+}
+
+.contact-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+}
+
+.contact-value {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .about-video {
+    height: 50vh;
+    min-height: 320px;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .section-inner {
+    padding: 72px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-links {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    /* Explicit height instead of relying on bottom:0 to auto-fill the gap:
+       .navbar.scrolled / .navbar--solid apply backdrop-filter, and per spec
+       that makes .navbar the containing block for this fixed descendant —
+       so "bottom: 0" resolved against navbar's own 72px-tall box instead of
+       the viewport, collapsing this panel to 0 height (links then rendered
+       outside their own zero-height background, i.e. transparent over the
+       hero). `vh` is always viewport-relative regardless of containing
+       block, so it sidesteps the problem entirely. */
+    height: calc(100vh - var(--nav-height));
+    background: #fff;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.3s ease;
+  }
+
+  .nav-links.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links a {
+    color: var(--color-text);
+    font-size: 18px;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .hero-content {
+    padding: 0 20px 64px;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .contact-links {
+    gap: 32px;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
